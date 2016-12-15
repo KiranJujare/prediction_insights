@@ -7,7 +7,8 @@
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
       #map {
-        height: 100px;
+        height: 100%;
+        width:90%;
       }
       /* Optional: Makes the sample page fill the window. */
       html, body {
@@ -52,32 +53,200 @@
     <div id="map"></div>
     <div id="succ"></div>
     <div id="err"></div>
-    <script type="text/javascript">
-      function downloadJSAtOnload() {
-        var element = document.createElement("script");
-        element.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization";
-        document.body.appendChild(element);
-        }
-    </script>
     <script>
 
       // This example requires the Visualization library. Include the libraries=visualization
       // parameter when you first load the API. For example:
       // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
 
-      var map, heatmap;
+      var map, heatmap, heatmap2, markers;
 
       function initMap() {
+        var styledMapType = new google.maps.StyledMapType(
+            [
+              {elementType: 'geometry', stylers: [{color: '#ebe3cd'}]},
+              {elementType: 'labels.text.fill', stylers: [{color: '#523735'}]},
+              {elementType: 'labels.text.stroke', stylers: [{color: '#f5f1e6'}]},
+              {
+                featureType: 'administrative',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#c9b2a6'}]
+              },
+              {
+                featureType: 'administrative.land_parcel',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#dcd2be'}]
+              },
+              {
+                featureType: 'administrative.land_parcel',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#ae9e90'}]
+              },
+              {
+                featureType: 'landscape.natural',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi.park',
+                elementType: 'geometry.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi.park',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road',
+                elementType: 'geometry',
+                stylers: [{color: '#f5f1e6'}]
+              },
+              {
+                featureType: 'road.arterial',
+                elementType: 'geometry',
+                stylers: [{color: '#fdfcf8'}]
+              },
+              {
+                featureType: 'road.highway',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway.controlled_access',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway.controlled_access',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.local',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'labels.text.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.station',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'water',
+                elementType: 'geometry.fill',
+                stylers: [{color: '#b9d3c2'}]
+              },
+              {
+                featureType: 'water',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#92998d'}]
+              }
+            ],
+            {name: 'My Map'});
+
         map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 13,
-          center: {lat: 37.775, lng: -122.434},
-          mapTypeId: 'satellite'
+          zoom: 5,
+          center: {lat: 22.2622, lng: 78.9062},
+          mapTypeControlOptions: {
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain',
+                    'styled_map']
+          }
         });
+
+        map.mapTypes.set('styled_map', styledMapType);
+        map.setMapTypeId('styled_map');
 
         heatmap = new google.maps.visualization.HeatmapLayer({
           data: getPoints(),
           map: map
         });
+
+        heatmap2 = new google.maps.visualization.HeatmapLayer({
+          data: getPoints2(),
+          map: map
+        });
+
+        changeGradient();
+
+        markers = [];
+        var image = {
+          url: 'https://irfinity.files.wordpress.com/2015/07/flipkart_new_icon.png',
+          size: new google.maps.Size(71, 71),
+          origin: new google.maps.Point(0, 0),
+          anchor: new google.maps.Point(17, 34),
+          scaledSize: new google.maps.Size(25, 25)
+        };
+
+        var temp_markers = getMarkers();
+        for(var i=0; i<temp_markers.length; i++){
+          markers.push(new google.maps.Marker({
+            map: map,
+            position: temp_markers[i][1],
+            title: temp_markers[i][2],
+            icon: image
+          }));
+
+          markers[markers.length - 1]['infowin'] = new google.maps.InfoWindow({
+            content: '<div>' + temp_markers[i][2] + '</div>'
+          });
+
+          google.maps.event.addListener(markers[markers.length - 1], 'click', function() {
+            this['infowin'].open(map, this);
+          });
+        }
+      }
+
+      function getMarkers() {
+        return [
+          ['del', new google.maps.LatLng(28.5441475, 77.11598079999999), 'Delhi Warehouse'],
+          ['del_ggn_01', new google.maps.LatLng(28.4554726, 77.02190189999999), 'Delhi Gurgaon 1 Warehouse'],
+          ['binola', new google.maps.LatLng(28.3043458, 76.88362610000001), 'Binola Warehouse'],
+          ['bil', new google.maps.LatLng(28.3043458, 76.88362610000001), 'Bilaspur Warehouse'],
+          ['bil_pataudi_01', new google.maps.LatLng(28.6643697, 77.43864289999999), 'Bilaspur Pataudi 1 Warehouse'],
+          ['ghz', new google.maps.LatLng(26.7809628, 80.99815760000001), 'Ghaziabad Warehouse'],
+          ['lko_bijnaur', new google.maps.LatLng(26.7799499, 75.84758529999999), 'Lucknow01warehouse'],
+          ['jai_01', new google.maps.LatLng(19.0289954, 72.88814639999998), 'Jaipur Mini FC Sitapur'],
+          ['mum_chbr_01', new google.maps.LatLng(19.3559246, 73.06413959999998), 'Mumbai Chembur 1 Warehouse'],
+          ['mum_bndi', new google.maps.LatLng(19.3559246, 73.06413959999998), 'Mumbai Bhiwandi Warehouse'],
+          ['hyderabad_medchal_01', new google.maps.LatLng(12.911862, 77.6445923), 'Hyderabad Medchal 01'],
+          ['blr_wfld', new google.maps.LatLng(12.9967012, 77.758197), 'Bangalore Whitefield Warehouse'],
+          ['blr_hsr_01', new google.maps.LatLng(22.649071, 88.54686449999997), 'Bangalore HSR Micro Warehouse'],
+          ['blr_jig_01', new google.maps.LatLng(17.638454, 78.49792479999996), 'Bangalore Jigani 1 Warehouse'],
+          ['chn_puzhal_01', new google.maps.LatLng(12.7774797, 77.64215769999998), 'Chennai01Warehouse'],
+          ['kol', new google.maps.LatLng(13.1389433, 80.13536380000005), 'Kolkata Warehouse'],
+          ['kol_dan_01', new google.maps.LatLng(22.733211, 88.31664189999992), 'Kolkata Dankuni 1 Warehouse']
+        ]
       }
 
       function toggleHeatmap() {
@@ -123,13 +292,31 @@
           new google.maps.LatLng(37.782, -122.437),
           {location: new google.maps.LatLng(37.782, -122.435), weight: 0.5},
 
-          {location: new google.maps.LatLng(37.785, -122.447), weight: 300},
+          {location: new google.maps.LatLng(22.2622, 78.9062), weight: 300},
           {location: new google.maps.LatLng(37.785, -122.445), weight: 2},
           new google.maps.LatLng(37.785, -122.443),
           {location: new google.maps.LatLng(37.785, -122.441), weight: 0.5},
-          new google.maps.LatLng(37.785, -122.439),
-          {location: new google.maps.LatLng(37.785, -122.437), weight: 2},
-          {location: new google.maps.LatLng(37.785, -122.435), weight: 3}
+          new google.maps.LatLng(37.785, -122.439)
+
+        ];
+      }
+
+      function getPoints2() {
+        return [
+          {location: new google.maps.LatLng(37.782, -122.447), weight: 15},
+          new google.maps.LatLng(37.782, -122.445),
+          {location: new google.maps.LatLng(37.782, -122.443), weight: 2},
+          {location: new google.maps.LatLng(37.782, -122.441), weight: 3},
+          {location: new google.maps.LatLng(37.782, -122.439), weight: 2},
+          new google.maps.LatLng(37.782, -122.437),
+          {location: new google.maps.LatLng(37.782, -122.435), weight: 0.5},
+
+          {location: new google.maps.LatLng(12.9716, 77.5946), weight: 300},
+          {location: new google.maps.LatLng(37.785, -122.445), weight: 2},
+          new google.maps.LatLng(37.785, -122.443),
+          {location: new google.maps.LatLng(37.785, -122.441), weight: 0.5},
+          new google.maps.LatLng(37.785, -122.439)
+
         ];
       }
 
@@ -147,30 +334,9 @@
             });
         };
 
-    function sleep(milliseconds) {
-      var start = new Date().getTime();
-      for (var i = 0; i < 1e7; i++) {
-        if ((new Date().getTime() - start) > milliseconds){
-          break;
-        }
-      }
-    }
-
-    function fetchLatLong(){
-      var pincodes = ['110001','110002','110004','110005','110008','110010','110011','110012','110013','110014','110015','110016','110018','110019','110020'];
-      for (var i=0; i<pincodes.length; i++) {
-        GetLocation(pincodes[i]);
-        if(i%11 == 0){
-          sleep(7000);
-          downloadJSAtOnload();
-        }else{
-          sleep(100);
-        }
-      }
-    }
     </script>
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization&callback=initMap">
     </script>
   </body>
 </html>
