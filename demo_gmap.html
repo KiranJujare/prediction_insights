@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Heatmaps</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 100px;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #floating-panel {
+        position: absolute;
+        top: 10px;
+        left: 25%;
+        z-index: 5;
+        background-color: #fff;
+        padding: 5px;
+        border: 1px solid #999;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+      #floating-panel {
+        background-color: #fff;
+        border: 1px solid #999;
+        left: 25%;
+        padding: 5px;
+        position: absolute;
+        top: 10px;
+        z-index: 5;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="floating-panel">
+      <button onclick="GetLocation('560034')">Get</button>
+      <button onclick="fetchLatLong()">Fetch</button>
+      <button onclick="toggleHeatmap()">Toggle Heatmap</button>
+      <button onclick="changeGradient()">Change gradient</button>
+      <button onclick="changeRadius()">Change radius</button>
+      <button onclick="changeOpacity()">Change opacity</button>
+    </div>
+    <div id="map"></div>
+    <div id="succ"></div>
+    <div id="err"></div>
+    <script type="text/javascript">
+      function downloadJSAtOnload() {
+        var element = document.createElement("script");
+        element.src = "https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization";
+        document.body.appendChild(element);
+        }
+    </script>
+    <script>
+
+      // This example requires the Visualization library. Include the libraries=visualization
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
+
+      var map, heatmap;
+
+      function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 13,
+          center: {lat: 37.775, lng: -122.434},
+          mapTypeId: 'satellite'
+        });
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+          data: getPoints(),
+          map: map
+        });
+      }
+
+      function toggleHeatmap() {
+        heatmap.setMap(heatmap.getMap() ? null : map);
+      }
+
+      function changeGradient() {
+        var gradient = [
+          'rgba(0, 255, 255, 0)',
+          'rgba(0, 255, 255, 1)',
+          'rgba(0, 191, 255, 1)',
+          'rgba(0, 127, 255, 1)',
+          'rgba(0, 63, 255, 1)',
+          'rgba(0, 0, 255, 1)',
+          'rgba(0, 0, 223, 1)',
+          'rgba(0, 0, 191, 1)',
+          'rgba(0, 0, 159, 1)',
+          'rgba(0, 0, 127, 1)',
+          'rgba(63, 0, 91, 1)',
+          'rgba(127, 0, 63, 1)',
+          'rgba(191, 0, 31, 1)',
+          'rgba(255, 0, 0, 1)'
+        ]
+        heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
+      }
+
+      function changeRadius() {
+        heatmap.set('radius', heatmap.get('radius') ? null : 20);
+      }
+
+      function changeOpacity() {
+        heatmap.set('opacity', heatmap.get('opacity') ? null : 0.2);
+      }
+
+      // Heatmap data: 500 Points
+      function getPoints() {
+        return [
+          {location: new google.maps.LatLng(37.782, -122.447), weight: 15},
+          new google.maps.LatLng(37.782, -122.445),
+          {location: new google.maps.LatLng(37.782, -122.443), weight: 2},
+          {location: new google.maps.LatLng(37.782, -122.441), weight: 3},
+          {location: new google.maps.LatLng(37.782, -122.439), weight: 2},
+          new google.maps.LatLng(37.782, -122.437),
+          {location: new google.maps.LatLng(37.782, -122.435), weight: 0.5},
+
+          {location: new google.maps.LatLng(37.785, -122.447), weight: 300},
+          {location: new google.maps.LatLng(37.785, -122.445), weight: 2},
+          new google.maps.LatLng(37.785, -122.443),
+          {location: new google.maps.LatLng(37.785, -122.441), weight: 0.5},
+          new google.maps.LatLng(37.785, -122.439),
+          {location: new google.maps.LatLng(37.785, -122.437), weight: 2},
+          {location: new google.maps.LatLng(37.785, -122.435), weight: 3}
+        ];
+      }
+
+	   function GetLocation(pincode) {
+            var geocoder = new google.maps.Geocoder();
+            var address = pincode;
+            geocoder.geocode({ 'address': address }, function (results, status) {
+                if (status == google.maps.GeocoderStatus.OK) {
+                    var latitude = results[0].geometry.location.lat();
+                    var longitude = results[0].geometry.location.lng();
+                    document.getElementById("succ").innerHTML += address + ", " + latitude + ", " + longitude + "</br>";
+                } else {
+                    document.getElementById("err").innerHTML += 'ERROR : ' + address + "</br>"
+                }
+            });
+        };
+
+    function sleep(milliseconds) {
+      var start = new Date().getTime();
+      for (var i = 0; i < 1e7; i++) {
+        if ((new Date().getTime() - start) > milliseconds){
+          break;
+        }
+      }
+    }
+
+    function fetchLatLong(){
+      var pincodes = ['110001','110002','110004','110005','110008','110010','110011','110012','110013','110014','110015','110016','110018','110019','110020'];
+      for (var i=0; i<pincodes.length; i++) {
+        GetLocation(pincodes[i]);
+        if(i%11 == 0){
+          sleep(7000);
+          downloadJSAtOnload();
+        }else{
+          sleep(100);
+        }
+      }
+    }
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization">
+    </script>
+  </body>
+</html>
