@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard Starter UI, by Keen IO</title>
+    <!--<script>document.write('<script type="text/javascript" src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>-->
+    <link rel="stylesheet" type="text/css" href="/static/assets/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" type="text/css" href="/static/assets/css/keen-dashboards.css"/>
+    <link href='https://api.tiles.mapbox.com/mapbox.js/v2.0.1/mapbox.css' rel='stylesheet'/>
+    <link rel="stylesheet" type="text/css" href="/static/examples/geo-explorer/geo-explorer.css"/>
+    <script type="text/javascript" src="/static/assets/lib/jquery/dist/jquery.min.js"></script>
+</head>
+{% load ffDashboard_extras %}
+<head>
+    <meta charset="utf-8">
+    <title>Heatmaps</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #app-maparea {
+        height: 100%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #floating-panel {
+        position: absolute;
+      }
+      #floating-panel {
+        background-color: #fff;
+      }
+
+
+    </style>
+</head>
+
+<body class="application">
+<div id="app-maparea"></div>
+<script>
+
+      // This example requires the Visualization library. Include the libraries=visualization
+      // parameter when you first load the API. For example:
+      // <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=visualization">
+
+      var map, heatmap, heatmap2, markers;
+
+      function initMap() {
+        var styledMapType = new google.maps.StyledMapType(
+            [
+              {elementType: 'geometry', stylers: [{color: '#ebe3cd'}]},
+              {elementType: 'labels.text.fill', stylers: [{color: '#523735'}]},
+              {elementType: 'labels.text.stroke', stylers: [{color: '#f5f1e6'}]},
+              {
+                featureType: 'administrative',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#c9b2a6'}]
+              },
+              {
+                featureType: 'administrative.land_parcel',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#dcd2be'}]
+              },
+              {
+                featureType: 'administrative.land_parcel',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#ae9e90'}]
+              },
+              {
+                featureType: 'landscape.natural',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi.park',
+                elementType: 'geometry.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'poi.park',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road',
+                elementType: 'geometry',
+                stylers: [{color: '#f5f1e6'}]
+              },
+              {
+                featureType: 'road.arterial',
+                elementType: 'geometry',
+                stylers: [{color: '#fdfcf8'}]
+              },
+              {
+                featureType: 'road.highway',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway.controlled_access',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.highway.controlled_access',
+                elementType: 'geometry.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'road.local',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.line',
+                elementType: 'labels.text.stroke',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'transit.station',
+                elementType: 'geometry',
+                stylers: [{color: '#f9f6ea'}]
+              },
+              {
+                featureType: 'water',
+                elementType: 'geometry.fill',
+                stylers: [{color: '#b9d3c2'}]
+              },
+              {
+                featureType: 'water',
+                elementType: 'labels.text.fill',
+                stylers: [{color: '#92998d'}]
+              },
+              {
+                featureType: "all",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }]
+              }
+            ],
+            {name: 'My Map'});
+
+        map = new google.maps.Map(document.getElementById('app-maparea'), {
+          zoom: 5,
+          center: {lat: 22.2622, lng: 78.9062},
+          mapTypeControlOptions: {
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain', 'styled_map']
+          }
+        });
+
+        var address = "India";
+        var geocoder = new google.maps.Geocoder();
+        geocoder.geocode( { 'address': address}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK) {
+                map.setCenter(results[0].geometry.location);
+                map.fitBounds(results[0].geometry.bounds);
+            } else {
+                alert("Geocode was not successful for the following reason: " + status);
+            }
+        });
+
+        map.mapTypes.set('styled_map', styledMapType);
+        map.setMapTypeId('styled_map');
+
+
+        heatmap = new google.maps.visualization.HeatmapLayer({
+          data: getPoints(),
+          map: map
+        });
+
+        <!--heatmap2 = new google.maps.visualization.HeatmapLayer({-->
+          <!--data: getPoints2(),-->
+          <!--map: map-->
+        <!--});-->
+
+        markers = [];
+        var image = {
+          url: 'https://irfinity.files.wordpress.com/2015/07/flipkart_new_icon.png',
+          size: new google.maps.Size(71, 71),
+          origin: new google.maps.Point(0, 0),
+          anchor: new google.maps.Point(17, 34),
+          scaledSize: new google.maps.Size(25, 25)
+        };
+
+        var temp_markers = getMarkers();
+        for(var i=0; i<temp_markers.length; i++){
+          markers.push(new google.maps.Marker({
+            map: map,
+            position: temp_markers[i][1],
+            title: temp_markers[i][2],
+            icon: image
+          }));
+
+          markers[markers.length - 1]['infowin'] = new google.maps.InfoWindow({
+            content: '<div>' + temp_markers[i][2] + '</div>'
+          });
+
+          google.maps.event.addListener(markers[markers.length - 1], 'click', function() {
+            this['infowin'].open(map, this);
+          });
+        }
+
+
+      {% for elem in demand %}
+      markers.push(new google.maps.Marker({title: 'Seller', map: map, position: new google.maps.LatLng({{ elem.lat }}, {{ elem.long }})}));
+      markers[markers.length - 1]['infowin'] = new google.maps.InfoWindow({
+            content: '<div>Seller</div>'
+          });
+      {% endfor %}
+
+
+      google.maps.event.addListener(markers[markers.length - 1], 'click', function() {
+        this['infowin'].open(map, this);
+      });
+      }
+
+      function getMarkers() {
+          return [
+            ['del', new google.maps.LatLng(28.545723, 77.087084), 'Delhi Warehouse'],
+            ['del_ggn_01', new google.maps.LatLng(28.459585, 77.009950), 'Delhi Gurgaon 1 Warehouse'],
+            ['bil', new google.maps.LatLng(28.293493, 76.885802), 'Bilaspur Warehouse'],
+            ['bil_pataudi_01', new google.maps.LatLng(28.327572, 76.776988), 'Bilaspur Pataudi 1 Warehouse'],
+            ['ghz', new google.maps.LatLng(28.662222, 77.443361), 'Ghaziabad Warehouse'],
+            ['lko_bijnaur', new google.maps.LatLng(26.792291, 80.979062), 'Lucknow01warehouse'],
+            ['jai_01', new google.maps.LatLng(26.778634, 75.835320), 'Jaipur Mini FC Sitapur'],
+            ['mum_chbr_01', new google.maps.LatLng(19.025671, 72.887387), 'Mumbai Chembur 1 Warehouse'],
+            ['mum_bndi', new google.maps.LatLng(19.374957, 73.093994), 'Mumbai Bhiwandi Warehouse'],
+            ['hyderabad_medchal_01', new google.maps.LatLng(17.635991, 78.503905), 'Hyderabad Medchal 01'],
+            ['blr_wfld', new google.maps.LatLng(13.005984, 77.766092), 'Bangalore Whitefield Warehouse'],
+            ['blr_hsr_01', new google.maps.LatLng(12.910586, 77.641831), 'Bangalore HSR Micro Warehouse'],
+            ['blr_jig_01', new google.maps.LatLng(12.780932, 77.627015), 'Bangalore Jigani 1 Warehouse'],
+            ['chn_puzhal_01', new google.maps.LatLng(13.156448, 80.130996), 'Chennai01Warehouse'],
+            ['kol', new google.maps.LatLng(22.654326, 88.539681), 'Kolkata Warehouse'],
+            ['kol_dan_01', new google.maps.LatLng(22.733065, 88.314389), 'Kolkata Dankuni 1 Warehouse']
+          ]
+        }
+
+      // Heatmap data: 500 Points
+      function getPoints() {
+        return [
+            {% for elem in sales %}
+              {location: new google.maps.LatLng({{ elem.lat }} , {{ elem.long }} ), weight: {{ elem.count}} },
+            {% endfor %}
+        ];
+      }
+
+
+
+
+</script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAYsAlElQAMkrNW-Jk3Peum7JJazvXYjwc&libraries=visualization&callback=initMap">
+</script>
+
+<script type="text/javascript">
+        var response = "";
+        $(function(){
+           $('#insights_by').change(function () {
+             //do ajax now
+             $.get("get_by_field/?seller={{ seller }}&field_name="+$(this).val(),function(res){
+             response = res;
+             selected_insights_header.innerText = res.field;
+               var sel = $('<select>').appendTo('body');
+                $('#selected_insights').find('option').remove().end();
+                $('#selected_insights').append(
+                      $('<option />')
+                  );
+                $(res.data).each(function() {
+                 $('#selected_insights').append(
+                      $('<option />')
+                          .text(this)
+                          .val(this)
+                  );
+                });
+
+             });
+           });
+        });
+
+        $(function(){
+           $('#selected_insights').change(function () {
+             //do ajax now
+             $.get("get_lat_long_by_field/?seller={{ seller }}&field="+response.field+"&field_value="+$(this).val(),function(res){
+             $("body").html(res)
+             });
+           });
+        });
+
+
+
+
+
+</script>
+
+<div id="app-toolbar">
+    <form action="" onsubmit="return false;" method="post">
+        <div class="row tools">
+            <div class="col-sm-3">
+                <div class="tool coordinates">
+                    <h5>Insights By</h5>
+                    <select class="form-control" id="insights_by">
+                        <option></option>
+                        <option value="product_id">Fsn</option>
+                        <option value="listing_id">Listing</option>
+                        <option value="vertical">Vertical</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="tool coordinates">
+
+                    <h5 id="selected_insights_header">Select</h5>
+                    <select class="form-control" id="selected_insights">
+                        <option></option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <div id="app-sidebar">
+
+        <div class="chart-wrapper" style="color: rgb(0, 0, 0);">
+            <div style="text-align: center;"><h2>Seller: {{ seller }}</h2></div>
+            <div style="text-align: center;"><h2>Top Listings</h2><br></div>
+            <div style="text-align: center;">
+                <div style="text-align: center;">
+                    <table style="width: 100%;" style="width: 1px; height: 1px;" border="1" cellspacing="1" cellpadding="1">
+                        <tbody>
+                        <tr>
+                            <td style="text-align: center;"><strong>Listing ID</strong>
+                                <div style="text-align: center;"></div>
+                            </td>
+                            <td>
+                                <div style="text-align: center;"><strong>Percentage %</strong></div>
+                            </td>
+                        </tr>
+
+                        {% for elem in top_listings %}
+                        <tr>
+                            <td>
+                                <div>{{ elem.listing_id }}</div>
+                            </td>
+                            <td>
+                                <div>{{ elem.percentage }}</div>
+                            </td>
+                        </tr>
+
+                        {% endfor%}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-wrapper" style="color: rgb(0, 0, 0);">
+            <div style="text-align: center;"><h2>Top WH Predictions</h2><br></div>
+            <div style="text-align: center;">
+                <div style="text-align: center;">
+                    <table style="width: 100%;" style="width: 1px; height: 1px;" border="1" cellspacing="1" cellpadding="1">
+                        <tbody>
+                        <tr>
+                            <td style="text-align: center;"><strong>Warehouse Name</strong><div style="text-align: center;"></div></td>
+                            <td><div style="text-align: center;"><strong>Percentage %</strong></div></td>
+                        </tr>
+
+                        {% for elem in wh_predictions_data %}
+                        <tr>
+                            <td>
+                                <div>{{ elem }}</div>
+                            </td>
+                            <td>
+                                <div>{{ wh_predictions_data|getItem:elem }}</div>
+                            </td>
+                        </tr>
+
+                        {% endfor%}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script type="text/javascript" src="https://api.tiles.mapbox.com/mapbox.js/v2.0.1/mapbox.js"></script>
+
+<script type="text/javascript" src="/static/assets/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+
+<script type="text/javascript" src="/static/assets/lib/keen-js/dist/keen.min.js"></script>
+<script type="text/javascript" src="https://d26b395fwzu5fz.cloudfront.net/3.1.0/keen.js?v=20141106"></script>
+<script type="text/javascript" src="/static/assets/js/meta.js"></script>
+
+<script type="text/javascript" src="/static/examples/geo-explorer/geo-explorer.js"></script>
+</body>
+</html>
+
+

@@ -13,8 +13,16 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
+DEBUG = TEMPLATE_DEBUG = False
+DEBUG404 = True
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+ADMINS = (
+    ("Kiran Jujare", "kiran.jujare@flipkart.com"),
+)
+
+SITE_ID = 1
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
@@ -28,6 +36,37 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+STATIC_ROOT = ''
+
+# URL prefix for static files.
+# Example: "http://example.com/static/", "http://static.example.com/"
+STATIC_URL = '/static/'
+
+print os.path.join(os.path.dirname(__file__), 'static').replace('\\', '/')
+# Additional locations of static files
+STATICFILES_DIRS = (
+    os.path.join(os.path.dirname(__file__), 'static').replace('\\', '/'),
+    # Put strings here, like "/home/html/static" or "C:/www/django/static".
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+)
+
+# List of finder classes that know how to find static files in
+# various locations.
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+)
+
+# List of callables that know how to import templates from various sources.
+TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+    #     'django.template.loaders.eggs.Loader',
+)
+
+ANONYMOUS_USER_ID = -987
+
 # Application definition
 
 INSTALLED_APPS = (
@@ -37,6 +76,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'insights_engine',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -55,7 +95,7 @@ ROOT_URLCONF = 'insights_engine.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'insights_engine/templates'), os.path.join(BASE_DIR, 'insights_engine/static'), os.path.join(BASE_DIR, 'insights_engine/static/examples')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,10 +116,36 @@ WSGI_APPLICATION = 'insights_engine.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'insights_engine', # Or path to database file if using sqlite3.
+        # The following settings are not used with sqlite3:
+        'USER': 'root',
+        'PASSWORD': '',
+        'HOST': 'localhost',
+        # Empty for localhost through domain sockets or '127.0.0.1' for localhost through TCP.
+        'PORT': '', # Set to empty string for default.
     }
 }
+
+SETTINGS_PATH = os.path.dirname(os.path.dirname(__file__))
+print SETTINGS_PATH
+
+TEMPLATE_DIRS = (
+    "insights_engine/insights_engine/templates",
+    os.path.join(SETTINGS_PATH, 'templates'),
+    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+)
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+    "django.core.context_processors.debug",
+    "django.core.context_processors.i18n",
+    "django.core.context_processors.media",
+    "django.core.context_processors.request",
+    "django.contrib.auth.context_processors.auth",
+)
 
 
 # Internationalization
@@ -94,9 +160,3 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.8/howto/static-files/
-
-STATIC_URL = '/static/'
