@@ -50,34 +50,34 @@
       function initMap() {
         var styledMapType = new google.maps.StyledMapType(
             [
-              {elementType: 'geometry', stylers: [{color: '#ebe3cd'}]},
-              {elementType: 'labels.text.fill', stylers: [{color: '#523735'}]},
-              {elementType: 'labels.text.stroke', stylers: [{color: '#f5f1e6'}]},
-              {
-                featureType: 'administrative',
-                elementType: 'geometry.stroke',
-                stylers: [{color: '#c9b2a6'}]
-              },
-              {
-                featureType: 'administrative.land_parcel',
-                elementType: 'geometry.stroke',
-                stylers: [{color: '#dcd2be'}]
-              },
-              {
-                featureType: 'administrative.land_parcel',
-                elementType: 'labels.text.fill',
-                stylers: [{color: '#ae9e90'}]
-              },
-              {
-                featureType: 'landscape.natural',
-                elementType: 'geometry',
-                stylers: [{color: '#f9f6ea'}]
-              },
-              {
-                featureType: 'poi',
-                elementType: 'geometry',
-                stylers: [{color: '#f9f6ea'}]
-              },
+              <!--{elementType: 'geometry', stylers: [{color: '#ebe3cd'}]},-->
+              <!--{elementType: 'labels.text.fill', stylers: [{color: '#523735'}]},-->
+              <!--{elementType: 'labels.text.stroke', stylers: [{color: '#f5f1e6'}]},-->
+              <!--{-->
+                <!--featureType: 'administrative',-->
+                <!--elementType: 'geometry.stroke',-->
+                <!--stylers: [{color: '#c9b2a6'}]-->
+              <!--},-->
+              <!--{-->
+                <!--featureType: 'administrative.land_parcel',-->
+                <!--elementType: 'geometry.stroke',-->
+                <!--stylers: [{color: '#dcd2be'}]-->
+              <!--},-->
+              <!--{-->
+                <!--featureType: 'administrative.land_parcel',-->
+                <!--elementType: 'labels.text.fill',-->
+                <!--stylers: [{color: '#ae9e90'}]-->
+              <!--},-->
+              <!--{-->
+                <!--featureType: 'landscape.natural',-->
+                <!--elementType: 'geometry',-->
+                <!--stylers: [{color: '#f9f6ea'}]-->
+              <!--},-->
+              <!--{-->
+                <!--featureType: 'poi',-->
+                <!--elementType: 'geometry',-->
+                <!--stylers: [{color: '#f9f6ea'}]-->
+              <!--},-->
               {
                 featureType: 'poi',
                 elementType: 'labels.text.fill',
@@ -96,12 +96,12 @@
               {
                 featureType: 'road',
                 elementType: 'geometry',
-                stylers: [{color: '#f5f1e6'}]
+                stylers: [{color: '#f9f6ea'}]
               },
               {
                 featureType: 'road.arterial',
                 elementType: 'geometry',
-                stylers: [{color: '#fdfcf8'}]
+                stylers: [{color: '#f9f6ea'}]
               },
               {
                 featureType: 'road.highway',
@@ -143,21 +143,11 @@
                 elementType: 'labels.text.stroke',
                 stylers: [{color: '#f9f6ea'}]
               },
-              {
-                featureType: 'transit.station',
-                elementType: 'geometry',
-                stylers: [{color: '#f9f6ea'}]
-              },
-              {
-                featureType: 'water',
-                elementType: 'geometry.fill',
-                stylers: [{color: '#b9d3c2'}]
-              },
-              {
-                featureType: 'water',
-                elementType: 'labels.text.fill',
-                stylers: [{color: '#92998d'}]
-              },
+              <!--{-->
+                <!--featureType: 'transit.station',-->
+                <!--elementType: 'geometry',-->
+                <!--stylers: [{color: '#f9f6ea'}]-->
+              <!--},-->
               {
                 featureType: "all",
                 elementType: "labels",
@@ -295,31 +285,63 @@
       window.onload = function () {
         var chart = new CanvasJS.Chart("whPredictionContainer",
         {
-          title:{
-            text: "Warehouse Predictions"
-          },
+          title:{text: "Top Selling Listings"},
           animationEnabled: true,
           data: [
           {
             type: "doughnut",
             startAngle: 60,
-            toolTipContent: "{legendText}: {y} - <strong>#percent% </strong>",
-            showInLegend: true,
-            explodeOnClick: false, //**Change it to true
-            dataPoints: getWhPredictions()
+            indexLabelFontSize: 10,
+            toolTipContent: "{legendText}: <strong>#{y}% </strong>",
+            showInLegend: false,
+            explodeOnClick: true, //**Change it to true
+            dataPoints: getListingsData(),
           }
           ]
         });
         chart.render();
+
+        function compareDataPointYAscend(dataPoint1, dataPoint2) {
+		return dataPoint1.y - dataPoint2.y;
+        }
+
+        var chart1 = new CanvasJS.Chart("bar_chart",
+        {
+          title:{text: "Demand Around WH (Start Inwarding)"},
+          animationEnabled: true,
+          data: [
+          {
+            type: "bar",
+            indexLabelFontSize: 10,
+            toolTipContent: "{legendText}: <strong>#{y}% </strong>",
+            showInLegend: false,
+            explodeOnClick: true, //**Change it to true
+            dataPoints: getWhPredictions(),
+            fontsize:20
+          }
+          ]
+        });
+        chart1.options.data[0].dataPoints.sort(compareDataPointYAscend);
+        chart1.render();
+      }
+
+      function getListingsData() {
+        return [
+          {% for elem in top_listings %}
+            {y: {{ elem.percentage }}, indexLabel: '{{ elem.listing_id }}', legendText: "{{ elem.listing_id }}" },
+          {% endfor %}
+        ]
       }
 
       function getWhPredictions() {
         return [
           {% for elem in wh_predictions_data %}
-            {y: 60929152, indexLabel: "Mitt Romney #percent%", legendText: "Mitt Romney" },
+            {y: {{ wh_predictions_data|getItem:elem }}, indexLabel: '{{ elem }}', legendText: "{{ elem }}" },
           {% endfor %}
         ]
       }
+
+
 
 
 </script>
@@ -356,15 +378,12 @@
            $('#selected_insights').change(function () {
              //do ajax now
              $.get("get_lat_long_by_field/?seller={{ seller }}&field="+response.field+"&field_value="+$(this).val(),function(res){
-             $("body").html(res)
+             $("body").html(res);
+             $( "#app-sidebar" ).hide();
+             $( "#app-maparea" ).hide();
              });
            });
         });
-
-
-
-
-
 </script>
 
 <div id="app-toolbar">
@@ -395,68 +414,51 @@
 
     <div id="app-sidebar">
 
-        <div class="chart-wrapper" style="color: rgb(0, 0, 0);">
-            <div style="text-align: center;"><h2>Seller: {{ seller }}</h2></div>
-            <div style="text-align: center;"><h2>Top Listings</h2><br></div>
-            <div style="text-align: center;">
-                <div style="text-align: center;">
-                    <table style="width: 100%;" style="width: 1px; height: 1px;" border="1" cellspacing="1" cellpadding="1">
-                        <tbody>
-                        <tr>
-                            <td style="text-align: center;"><strong>Listing ID</strong>
-                                <div style="text-align: center;"></div>
-                            </td>
-                            <td>
-                                <div style="text-align: center;"><strong>Percentage %</strong></div>
-                            </td>
-                        </tr>
+        <!--<div class="chart-wrapper" style="color: rgb(0, 0, 0);">-->
+            <!--<div style="text-align: center;"><h2>Top WH Predictions</h2><br></div>-->
+            <!--<div style="text-align: center;">-->
+                <!--<div style="text-align: center;">-->
+                    <!--<table style="width: 100%;" style="width: 1px; height: 1px;" border="1" cellspacing="1" cellpadding="1">-->
+                        <!--<tbody>-->
+                        <!--<tr>-->
+                            <!--<td style="text-align: center;"><strong>Warehouse Name</strong><div style="text-align: center;"></div></td>-->
+                            <!--<td><div style="text-align: center;"><strong>Percentage %</strong></div></td>-->
+                        <!--</tr>-->
 
-                        {% for elem in top_listings %}
-                        <tr>
-                            <td>
-                                <div>{{ elem.listing_id }}</div>
-                            </td>
-                            <td>
-                                <div>{{ elem.percentage }}</div>
-                            </td>
-                        </tr>
+                        <!--{% for elem in wh_predictions_data %}-->
+                        <!--<tr>-->
+                            <!--<td>-->
+                                <!--<div>{{ elem }}</div>-->
+                            <!--</td>-->
+                            <!--<td>-->
+                                <!--<div>{{ wh_predictions_data|getItem:elem }}</div>-->
+                            <!--</td>-->
+                        <!--</tr>-->
 
-                        {% endfor%}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                        <!--{% endfor%}-->
+                        <!--</tbody>-->
+                    <!--</table>-->
+                <!--</div>-->
+            <!--</div>-->
+        <!--</div>-->
+        <!--<div class="chart-wrapper" >-->
+            <!--<div style="text-align: center;">-->
+                <!--<div id="whPredictionContainer" style="color: rgb(0, 0, 0);"></div>-->
+            <!--</div>-->
+        <!--</div>-->
+
+        <div class="chart-wrapper" >
+            <div class="chart-title"></div>
+            <!--<div style="text-align: center;"></div>-->
+            <div class="chart-stage"><div id="whPredictionContainer" style="height: 400px; color: rgb(0, 0, 0);"></div></div>
         </div>
 
-        <div class="chart-wrapper" style="color: rgb(0, 0, 0);">
-            <div style="text-align: center;"><h2>Top WH Predictions</h2><br></div>
-            <div style="text-align: center;">
-                <div style="text-align: center;">
-                    <table style="width: 100%;" style="width: 1px; height: 1px;" border="1" cellspacing="1" cellpadding="1">
-                        <tbody>
-                        <tr>
-                            <td style="text-align: center;"><strong>Warehouse Name</strong><div style="text-align: center;"></div></td>
-                            <td><div style="text-align: center;"><strong>Percentage %</strong></div></td>
-                        </tr>
-
-                        {% for elem in wh_predictions_data %}
-                        <tr>
-                            <td>
-                                <div>{{ elem }}</div>
-                            </td>
-                            <td>
-                                <div>{{ wh_predictions_data|getItem:elem }}</div>
-                            </td>
-                        </tr>
-
-                        {% endfor%}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="chart-wrapper" >
+            <div class="chart-title"></div>
+            <!--<div style="text-align: center;"></div>-->
+            <div class="chart-stage"><div id="bar_chart" style="height: 400px; color: rgb(0, 0, 0);"></div></div>
         </div>
 
-        <div id="chartContainer" class="chart-wrapper" style="color: rgb(0, 0, 0);"></div>
 
     </div>
 </div>

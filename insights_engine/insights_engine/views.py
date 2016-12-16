@@ -3,6 +3,7 @@ import json
 import collections
 from collections import defaultdict
 
+import operator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -63,7 +64,7 @@ def index(request):
     for each in wh_predictions_data.keys():
         wh_predictions_data[each] = round((wh_predictions_data.get(each)/total_count)*100, 2)
 
-    collections.OrderedDict(sorted(wh_predictions_data.items()))
+    # sorted_x = sorted(wh_predictions_data.items(), key=operator.itemgetter(1))
 
     return render(request, 'index.html',
                   {"sales": sales, "demand": demand, "seller": seller_id, "top_listings": top_listings, "wh_predictions_data": wh_predictions_data})
