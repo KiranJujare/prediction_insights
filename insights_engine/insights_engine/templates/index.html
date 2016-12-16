@@ -8,6 +8,7 @@
     <link href='https://api.tiles.mapbox.com/mapbox.js/v2.0.1/mapbox.css' rel='stylesheet'/>
     <link rel="stylesheet" type="text/css" href="/static/examples/geo-explorer/geo-explorer.css"/>
     <script type="text/javascript" src="/static/assets/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="/static/assets/js/canvasjs.min.js"></script>
 </head>
 {% load ffDashboard_extras %}
 <head>
@@ -269,7 +270,34 @@
         ];
       }
 
+      window.onload = function () {
+        var chart = new CanvasJS.Chart("whPredictionContainer",
+        {
+          title:{
+            text: "Warehouse Predictions"
+          },
+          animationEnabled: true,
+          data: [
+          {
+            type: "doughnut",
+            startAngle: 60,
+            toolTipContent: "{legendText}: {y} - <strong>#percent% </strong>",
+            showInLegend: true,
+            explodeOnClick: false, //**Change it to true
+            dataPoints: getWhPredictions()
+          }
+          ]
+        });
+        chart.render();
+      }
 
+      function getWhPredictions() {
+        return [
+          {% for elem in wh_predictions_data %}
+            {y: 60929152, indexLabel: "Mitt Romney #percent%", legendText: "Mitt Romney" },
+          {% endfor %}
+        ]
+      }
 
 
 </script>
@@ -405,6 +433,8 @@
                 </div>
             </div>
         </div>
+
+        <div id="chartContainer" class="chart-wrapper" style="color: rgb(0, 0, 0);"></div>
 
     </div>
 </div>
